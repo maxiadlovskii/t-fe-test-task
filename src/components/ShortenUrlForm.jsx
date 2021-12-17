@@ -1,29 +1,55 @@
 /* eslint no-unused-vars: 1 */
-
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useMemo, useEffect } from 'react';
+import useFetch from '../hooks';
+import generateUrl from '../api/generateUrl';
 
 const ShortenUrlForm = () => {
+    const [
+        { data, error, isFetching, isFailed, isSuccess },
+        triggerGenerateUrl,
+    ] = useFetch(generateUrl);
+    const [isCopied, setIsCopied] = useState(false);
     const [value, setValue] = useState('');
 
     const onChange = useCallback(
-        (e) => {
-            // TODO: Set the component's new state based on the user's input
+        ({ target: { value: inputValue } }) => {
+            setValue(inputValue);
         },
-        [
-            /* TODO: Add necessary deps */
-        ],
+        [setValue],
     );
 
     const onSubmit = useCallback(
         (e) => {
             e.preventDefault();
-            // TODO: shorten url and copy to clipboard
+            const postData = async () => {
+                try {
+                    await triggerGenerateUrl({ long_url: value });
+                } catch (err) {
+                    // console.log(err)
+                }
+            };
+            postData();
         },
-        [
-            /* TODO: necessary deps */
-        ],
+        [triggerGenerateUrl, value],
     );
-
+    const errorMessage = useMemo(
+        () => isFailed && error.description,
+        [isFailed, error],
+    );
+    const shortUrl = useMemo(() => isSuccess && data.link, [data, isSuccess]);
+    useEffect(() => {
+        const makeCopy = async () => {
+            try {
+                await navigator.clipboard.writeText(shortUrl);
+                setIsCopied(true);
+            } catch (e) {
+                setIsCopied(false);
+            }
+        };
+        if (shortUrl) {
+            makeCopy();
+        }
+    }, [shortUrl, setIsCopied]);
     return (
         <form onSubmit={onSubmit}>
             <label htmlFor="shorten">
@@ -34,11 +60,22 @@ const ShortenUrlForm = () => {
                     type="text"
                     value={value}
                     onChange={onChange}
+                    disabled={isFetching}
                 />
             </label>
-            <input type="submit" value="Shorten and copy URL" />
-            {/* TODO: show below only when the url has been shortened and copied */}
-            <div>{/* Show shortened url --- copied! */}</div>
+            <input
+                type="submit"
+                value="Shorten and copy URL"
+                disabled={isFetching}
+            />
+            {isSuccess && isCopied && (
+                <div>
+                    <a href={shortUrl} target="_blank" rel="noreferrer">
+                        {shortUrl}
+                    </a>
+                </div>
+            )}
+            {isFailed && <div>{errorMessage}</div>}
         </form>
     );
 };

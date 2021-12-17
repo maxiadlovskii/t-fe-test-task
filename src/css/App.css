@@ -20,9 +20,7 @@ input[type='text'] {
 }
 
 input[type='submit'] {
-    color: #343a40;
     background-color: #69d2aa;
-    border-color: #69d2aa;
     cursor: pointer;
     display: inline-block;
     font-weight: 400;
@@ -37,5 +35,9 @@ input[type='submit'] {
 }
 
 input[type='submit']:hover {
+    color: #fff;
+}
+
+a {
     color: #fff;
 }
